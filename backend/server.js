@@ -2,7 +2,16 @@ const express = require('express');
 const mysql = require('mysql2/promise'); // Usamos la versión promise-based
 const path = require('path');
 const cors = require('cors'); // Añade esta línea para importar cors
+const { WebpayPlus, Options, IntegrationApiKeys, Environment, IntegrationCommerceCodes } = require('transbank-sdk');
 
+// Configuración de Webpay (añade esto antes de las rutas)
+const tx = new WebpayPlus.Transaction(
+    new Options(
+        IntegrationCommerceCodes.WEBPAY_PLUS,
+        IntegrationApiKeys.WEBPAY,
+        Environment.Integration // Cambiar a Environment.Production en producción
+    )
+);
 const app = express();
 const PORT = 3006;
 
@@ -158,6 +167,84 @@ app.get('/api/categorias', async (req, res) => {
     } catch (err) {
         console.error('Error al obtener categorías:', err);
         res.status(500).json({ error: 'Error al obtener categorías' });
+    }
+});
+// endpoint /api/pagar 
+app.post('/api/pagar', async (req, res) => {
+    const carrito = req.body.carrito;
+
+    if (!carrito || carrito.length === 0) {
+        return res.status(400).json({ error: 'El carrito está vacío.' });
+    }
+
+    try {
+        const total = Math.round(carrito.reduce((sum, p) => sum + p.precio * p.cantidad, 0));
+
+        if (total <= 0) {
+            return res.status(400).json({ error: 'El monto total debe ser mayor que 0.' });
+        }
+
+        const buyOrder = 'ORD' + Date.now();
+        const sessionId = 'SESS' + Date.now();
+        const returnUrl = 'http://localhost:3000/pago-resultado'; // Cambia esto según tu frontend
+
+        const response = await tx.create(buyOrder, sessionId, total, returnUrl);
+
+        // Guardar la transacción inicial en la base de datos
+        await pool.query(
+            'INSERT INTO transacciones (buy_order, session_id, amount, token, status) VALUES (?, ?, ?, ?, ?)',
+            [buyOrder, sessionId, total, response.token, 'CREATED']
+        );
+
+        res.json({
+            url: response.url,
+            token: response.token
+        });
+
+    } catch (err) {
+        console.error('Error en transacción:', err);
+        res.status(500).json({
+            error: 'Error al iniciar la transacción',
+            details: err.message
+        });
+    }
+});
+// Endpoint mejorado para manejar la respuesta de Webpay
+app.post('/api/webpay/confirm', async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ error: 'Token no proporcionado' });
+        }
+
+        const tx = new WebpayPlus.Transaction(
+            new Options(
+                IntegrationCommerceCodes.WEBPAY_PLUS,
+                IntegrationApiKeys.WEBPAY,
+                Environment.Integration
+            )
+        );
+
+        const response = await tx.commit(token);
+
+        // Guardar en base de datos
+        await pool.query(
+            'UPDATE transacciones SET status = ?, response = ? WHERE token = ?',
+            [response.status, JSON.stringify(response), token]
+        );
+
+        res.json({
+            success: response.status === "AUTHORIZED",
+            response
+        });
+
+    } catch (err) {
+        console.error("Error confirmando transacción:", err);
+        res.status(500).json({
+            error: 'Error confirmando transacción',
+            details: err.message
+        });
     }
 });
 

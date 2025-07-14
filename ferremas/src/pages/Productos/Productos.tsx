@@ -19,6 +19,11 @@ interface Producto {
 interface ProductoEnCarrito extends Producto {
     cantidadEnCarrito: number;
 }
+// Añade esta interfaz
+interface PaymentResponse {
+    url: string;
+    token: string;
+}
 
 export default function Productos() {
     const [productos, setProductos] = useState<Producto[]>([]);
@@ -81,6 +86,63 @@ export default function Productos() {
             (total, item) => total + (item.precio * item.cantidadEnCarrito),
             0
         );
+    };
+
+    // Modifica la función iniciarPago
+    const iniciarPago = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch("http://localhost:3006/api/pagar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    carrito: carrito.map((p) => ({
+                        id: p.id,
+                        cantidad: p.cantidadEnCarrito,
+                        precio: Math.round(p.precio),
+                    })),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${await response.text()}`);
+            }
+
+            const data: PaymentResponse = await response.json();
+
+            // Abrir Webpay en una nueva ventana
+            const paymentWindow = window.open(
+                `${data.url}?token_ws=${data.token}`,
+                'webpayWindow',
+                'width=800,height=600'
+            );
+
+            // Escuchar mensajes desde la ventana de pago
+            const handleMessage = (event: MessageEvent) => {
+                if (event.data.webpayStatus) {
+                    paymentWindow?.close();
+                    window.removeEventListener('message', handleMessage);
+
+                    if (event.data.webpayStatus === 'success') {
+                        navigate('/checkout/success', {
+                            state: { transaction: event.data.response }
+                        });
+                    } else {
+                        navigate('/checkout/failure', {
+                            state: { transaction: event.data.response }
+                        });
+                    }
+                }
+            };
+
+            window.addEventListener('message', handleMessage);
+
+        } catch (err) {
+            console.error("Error en el pago:", err);
+            alert("Ocurrió un error al iniciar el pago: " + (err instanceof Error ? err.message : String(err)));
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Cargar productos al montar el componente
@@ -169,9 +231,10 @@ export default function Productos() {
                     </div>
                     <button
                         className={styles.btnCheckout}
-                        onClick={() => navigate("/checkout", { state: { carrito } })}
+                        onClick={iniciarPago}
+                        disabled={loading}
                     >
-                        Proceder al pago
+                        {loading ? 'Procesando...' : 'Pagar con Webpay'}
                     </button>
                 </div>
             )}
