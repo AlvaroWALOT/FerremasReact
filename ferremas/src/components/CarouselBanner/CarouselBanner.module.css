@@ -1,0 +1,301 @@
+/* CarouselBanner.module.css */
+.carouselWrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  margin: 20px 0;
+  box-shadow: 0 8px 24px rgba(51, 51, 51, 0.1);
+  transition: all 0.3s ease;
+}
+
+.carouselWrapper:hover {
+  box-shadow: 0 12px 32px rgba(51, 51, 51, 0.15);
+  transform: translateY(-4px);
+}
+
+.carousel {
+  position: relative;
+  z-index: 1;
+}
+
+.imageContainer {
+  position: relative;
+  height: 600px;
+  overflow: hidden;
+}
+
+.imageContainer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.5s ease;
+}
+
+.carouselWrapper:hover .imageContainer img {
+  transform: scale(1.05);
+}
+
+.transitioning .imageContainer img {
+  animation: zoom 7s ease;
+}
+
+@keyframes zoom {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+/* Temas específicos para cada tipo de slide */
+.herramientasTheme {
+  border-left: 4px solid #FF6B35;
+}
+
+.materialesTheme {
+  border-left: 4px solid #3A86FF;
+}
+
+.ofertaTheme {
+  border-left: 4px solid #FFBE0B;
+}
+
+/* Estilos para el mensaje principal */
+.mainMessageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+  padding: 0 50px;
+  background: linear-gradient(90deg, rgba(58, 134, 255, 0.85) 0%, rgba(58, 134, 255, 0.2) 100%);
+  transition: background 0.5s ease;
+}
+
+.herramientasMessage ~ .mainMessageOverlay {
+  background: linear-gradient(90deg, rgba(255, 107, 53, 0.85) 0%, rgba(255, 107, 53, 0.2) 100%);
+}
+
+.materialesMessage ~ .mainMessageOverlay {
+  background: linear-gradient(90deg, rgba(58, 134, 255, 0.85) 0%, rgba(58, 134, 255, 0.2) 100%);
+}
+
+.ofertaMessage ~ .mainMessageOverlay {
+  background: linear-gradient(90deg, rgba(255, 190, 11, 0.85) 0%, rgba(255, 190, 11, 0.2) 100%);
+}
+
+.mainMessageContent {
+  max-width: 550px;
+  padding: 30px;
+  background-color: rgba(250, 250, 249, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 1s ease;
+  border-left: 6px solid #3A86FF;
+}
+
+.herramientasMessage {
+  border-left: 6px solid #FF6B35;
+}
+
+.materialesMessage {
+  border-left: 6px solid #3A86FF;
+}
+
+.ofertaMessage {
+  border-left: 6px solid #FFBE0B;
+}
+
+.mainMessageContent h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #333333;
+  line-height: 1.2;
+}
+
+.mainMessageContent p {
+  font-size: 1.2rem;
+  color: #666666;
+  margin-bottom: 24px;
+}
+
+.mainActionButton {
+  background-color: #3A86FF;
+  color: #FAFAF9;
+  border: none;
+  padding: 14px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+}
+
+.herramientasMessage .mainActionButton {
+  background-color: #FF6B35;
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.herramientasMessage .mainActionButton:hover {
+  background-color: #E05A2B;
+  box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
+}
+
+.materialesMessage .mainActionButton {
+  background-color: #3A86FF;
+  box-shadow: 0 4px 12px rgba(58, 134, 255, 0.3);
+}
+
+.materialesMessage .mainActionButton:hover {
+  background-color: #2A75E6;
+  box-shadow: 0 6px 16px rgba(58, 134, 255, 0.4);
+}
+
+.ofertaMessage .mainActionButton {
+  background-color: #FFBE0B;
+  color: #333333;
+  box-shadow: 0 4px 12px rgba(255, 190, 11, 0.3);
+}
+
+.ofertaMessage .mainActionButton:hover {
+  background-color: #E6AB00;
+  box-shadow: 0 6px 16px rgba(255, 190, 11, 0.4);
+}
+
+.mainActionButton:hover {
+  transform: translateY(-2px);
+}
+
+.mainActionButton:active {
+  transform: translateY(0);
+}
+
+/* Media queries para responsividad */
+@media (max-width: 992px) {
+  .imageContainer {
+    height: 500px;
+  }
+  
+  .mainMessageContent h1 {
+    font-size: 2.2rem;
+  }
+  
+  .mainMessageContent {
+    max-width: 450px;
+  }
+}
+
+@media (max-width: 768px) {
+  .imageContainer {
+    height: 400px;
+  }
+  
+  .mainMessageContent {
+    max-width: 90%;
+    padding: 20px;
+  }
+  
+  .mainMessageContent h1 {
+    font-size: 1.8rem;
+  }
+  
+  .mainMessageContent p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .imageContainer {
+    height: 350px;
+  }
+  
+  .mainMessageContent h1 {
+    font-size: 1.5rem;
+  }
+}
+/* Agrega esto al final del archivo CSS, antes de los media queries */
+
+/* Custom controls - Flechas de navegación */
+.customControls {
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10; /* Asegura que estén por encima de otros elementos */
+  pointer-events: none; /* Permite clicks en elementos debajo cuando no son visibles */
+}
+
+.controlPrev, .controlNext {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #333333;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  pointer-events: auto; /* Permite interactuar con los botones */
+  opacity: 0.8;
+  font-size: 1.5rem;
+  font-weight: bold;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.controlPrev:hover, .controlNext:hover {
+  background-color: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.controlPrev {
+  margin-left: 10px;
+}
+
+.controlNext {
+  margin-right: 10px;
+}
+
+/* Custom indicators - Puntos de navegación */
+.customIndicators {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.indicator.active {
+  background-color: #3A86FF;
+  width: 24px;
+  border-radius: 10px;
+}
+
+/* Asegúrate que el mainMessageOverlay no tape los controles */
+.mainMessageOverlay {
+  z-index: 2; /* Menor que los controles (10) */
+}

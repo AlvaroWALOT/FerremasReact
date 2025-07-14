@@ -1,0 +1,7 @@
+:root {
+  --primary: #e63946; /* Rojo ferretero */
+  --secondary: #457b9d; /* Azul industrial */
+  --accent: #f4a261; /* Naranja herramientas */
+  --gradient-primary: linear-gradient(135deg, #e63946 0%, #457b9d 100%);
+  --gradient-accent: linear-gradient(135deg, #f4a261 0%, #e63946 100%);
+}
