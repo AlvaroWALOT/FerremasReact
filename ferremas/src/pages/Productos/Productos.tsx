@@ -19,7 +19,7 @@ interface Producto {
 interface ProductoEnCarrito extends Producto {
     cantidadEnCarrito: number;
 }
-// Añade esta interfaz
+
 interface PaymentResponse {
     url: string;
     token: string;
@@ -30,6 +30,9 @@ export default function Productos() {
     const [carrito, setCarrito] = useState<ProductoEnCarrito[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currency, setCurrency] = useState<"CLP" | "USD">("CLP");
+    const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+    const [loadingRate, setLoadingRate] = useState(false);
     const navigate = useNavigate();
 
     const fetchProductos = async () => {
@@ -53,7 +56,44 @@ export default function Productos() {
         }
     };
 
-    // Agregar producto al carrito
+    const fetchExchangeRate = async () => {
+        setLoadingRate(true);
+        try {
+            const response = await fetch("http://localhost:3006/api/tipo-cambio");
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Error al obtener tipo de cambio");
+            }
+
+            const data = await response.json();
+
+            if (data.value) {
+                setExchangeRate(data.value);
+                console.log(`Tipo de cambio actualizado: 1 USD = ${data.value} CLP (${data.date})`);
+            } else {
+                throw new Error("No se recibió valor de tipo de cambio");
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                console.error("Error obteniendo tipo de cambio:", error.message);
+            } else {
+                console.error("Error obteniendo tipo de cambio:", String(error));
+            }
+            // Establecer un valor por defecto o mostrar mensaje al usuario
+            setExchangeRate(950); // Valor por defecto
+            alert("No se pudo obtener el tipo de cambio actual. Usando valor de referencia.");
+        } finally {
+            setLoadingRate(false);
+        }
+    };
+
+    useEffect(() => {
+        if (currency === "USD" && exchangeRate === null) {
+            fetchExchangeRate();
+        }
+    }, [currency]);
+
     const agregarAlCarrito = (producto: Producto) => {
         setCarrito((prev) => {
             const existe = prev.find((item) => item.id === producto.id);
@@ -75,20 +115,29 @@ export default function Productos() {
         });
     };
 
-    // Eliminar producto del carrito
     const eliminarDelCarrito = (id: number) => {
         setCarrito(carrito.filter(item => item.id !== id));
     };
 
-    // Calcular total del carrito
     const calcularTotal = () => {
-        return carrito.reduce(
+        const totalCLP = carrito.reduce(
             (total, item) => total + (item.precio * item.cantidadEnCarrito),
             0
         );
+
+        if (currency === "USD" && exchangeRate) {
+            return totalCLP / exchangeRate;
+        }
+        return totalCLP;
     };
 
-    // Modifica la función iniciarPago
+    const formatPrice = (price: number) => {
+        if (currency === "USD" && exchangeRate) {
+            return `US$${(price / exchangeRate).toFixed(2)}`;
+        }
+        return `$${price.toLocaleString("es-CL")}`;
+    };
+
     const iniciarPago = async () => {
         try {
             setLoading(true);
@@ -110,14 +159,12 @@ export default function Productos() {
 
             const data: PaymentResponse = await response.json();
 
-            // Abrir Webpay en una nueva ventana
             const paymentWindow = window.open(
                 `${data.url}?token_ws=${data.token}`,
                 'webpayWindow',
                 'width=800,height=600'
             );
 
-            // Escuchar mensajes desde la ventana de pago
             const handleMessage = (event: MessageEvent) => {
                 if (event.data.webpayStatus) {
                     paymentWindow?.close();
@@ -145,7 +192,6 @@ export default function Productos() {
         }
     };
 
-    // Cargar productos al montar el componente
     useEffect(() => {
         fetchProductos();
     }, []);
@@ -156,6 +202,33 @@ export default function Productos() {
     return (
         <div className={styles.container}>
             <h1 className={styles.title}>Productos Ferremas</h1>
+
+            {/* Selector de moneda */}
+            <div className="mb-3" style={{ marginBottom: '20px' }}>
+                <label htmlFor="currency-select" className="form-label">Moneda:</label>
+                <select
+                    id="currency-select"
+                    className="form-select w-auto d-inline-block ms-2"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value as "CLP" | "USD")}
+                    style={{ width: 'auto', display: 'inline-block', marginLeft: '10px' }}
+                >
+                    <option value="CLP">CLP (Pesos Chilenos)</option>
+                    <option value="USD">USD (Dólares)</option>
+                </select>
+
+                {currency === "USD" && (
+                    <span className="ms-3" style={{ marginLeft: '15px' }}>
+                        {loadingRate && "Cargando tipo de cambio..."}
+                        {!loadingRate && exchangeRate && (
+                            <>Tipo de cambio: 1 USD = {exchangeRate} CLP</>
+                        )}
+                        {!loadingRate && !exchangeRate && (
+                            <span className="text-danger">Error obteniendo tipo de cambio</span>
+                        )}
+                    </span>
+                )}
+            </div>
 
             {/* Listado de productos */}
             <div className="row">
@@ -175,7 +248,7 @@ export default function Productos() {
                                 <div className={styles.productFooter}>
                                     <span className={styles.productCode}>{producto.codigo_producto}</span>
                                     <span className={styles.productPrice}>
-                                        ${producto.precio.toLocaleString("es-CL")}
+                                        {formatPrice(producto.precio)}
                                     </span>
                                     <button
                                         className={`${styles.btnPrimary} ${producto.cantidad <= 0 ? styles.disabled : ''}`}
@@ -213,7 +286,7 @@ export default function Productos() {
                                 </div>
                                 <div className={styles.cartItemActions}>
                                     <span className={styles.cartItemPrice}>
-                                        ${(item.precio * item.cantidadEnCarrito).toLocaleString("es-CL")}
+                                        {formatPrice(item.precio * item.cantidadEnCarrito)}
                                     </span>
                                     <button
                                         className={styles.btnRemove}
@@ -227,7 +300,7 @@ export default function Productos() {
                     </ul>
                     <div className={styles.cartTotal}>
                         <span>Total:</span>
-                        <span>${calcularTotal().toLocaleString("es-CL")}</span>
+                        <span>{formatPrice(calcularTotal())}</span>
                     </div>
                     <button
                         className={styles.btnCheckout}
