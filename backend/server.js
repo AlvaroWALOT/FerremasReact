@@ -186,7 +186,7 @@ app.post('/api/pagar', async (req, res) => {
 
         const buyOrder = 'ORD' + Date.now();
         const sessionId = 'SESS' + Date.now();
-        const returnUrl = 'http://localhost:3000/pago-resultado'; // Cambia esto según tu frontend
+        const returnUrl = 'http://localhost:5173/pago-resultado'; // Cambia esto según tu frontend
 
         const response = await tx.create(buyOrder, sessionId, total, returnUrl);
 
